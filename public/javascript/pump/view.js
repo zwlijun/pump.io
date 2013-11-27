@@ -1353,6 +1353,11 @@
             "click .unshare": "unshareObject",
             "click .comment": "openComment",
             "click .object-image": "openImage",
+            "click [data-action]": "triggerAction"
+        },
+        triggerAction: function(ev){
+            var actionName = $(ev.target).data('action');
+            Pump.Actions.triggerAction(actionName, this.model.object.toJSON());
         },
         setupSubs: function() {
             var view = this,
@@ -2734,14 +2739,22 @@
                 text = view.$('#post-note #note-content').val(),
                 to = view.$('#post-note #note-to').val(),
                 cc = view.$('#post-note #note-cc').val(),
-                act = new Pump.Activity({
-                    verb: "post",
-                    object: {
-                        objectType: "note",
-                        content: text
-                    }
-                }),
-                strToObj = function(str) {
+                actionName = view.$('#post-note #note-action-name').val(),
+                actionHandler = view.$('#post-note #note-action-handler').val();
+            var seed = {
+                verb: "post",
+                object: {
+                    objectType: "note",
+                    content: text
+                }
+            };
+            if (!_.isEmpty(actionName)) {
+                seed.object.actions = new Pump.ActivityObject({objectType: 'other'});
+                seed.object.actions.set(actionName, {objectType: actionHandler});
+            }
+            var act = new Pump.Activity(seed);
+
+            var strToObj = function(str) {
                     var colon = str.indexOf(":"),
                         type = str.substr(0, colon),
                         id = str.substr(colon+1);
